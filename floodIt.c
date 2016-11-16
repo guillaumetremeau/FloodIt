@@ -13,32 +13,34 @@
 
 int myrand(int rang);
 void initialiser(int tab[][TAILLE]);
-void afficherGrille(int tab[][TAILLE]);
+void afficherGrille(int tab[][TAILLE],SDL_Renderer *);
 void afficherIterations(int tab[][TAILLE]);
 int fin(int tab[][TAILLE]);
 void remplir(int tab[][TAILLE], int oldColor,int newColor,int i,int j,int iteration);
 
-void afficherEcran();
+void afficherEcran(SDL_Renderer *);
 
 
-
-
-int main(){
 	int tab[TAILLE][TAILLE];
 	int varUser = 0;
 	int iteration = 0;
 
 
+int main(){
 
 	/* ############# Initialisation graphique  SDL ############# */
 
 	int flags = IMG_INIT_JPG|IMG_INIT_PNG;
 	int initted = IMG_Init(flags);
 	SDL_Window * window;
-	int width = 500;
-	int height = 350;
+	int width = 480;
+	int height = 480;
 	int running = 1;
 	SDL_Event event;
+	SDL_Renderer *renderer;
+
+	initialiser(tab);
+
 
 	if((initted&flags) != flags)
 	{
@@ -69,42 +71,51 @@ int main(){
 	}
 
 
+	
+	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED ); /*
+	SDL_RENDERER_SOFTWARE */
+	if (renderer == 0) {
+		fprintf(stderr, "Erreur d'initialisation de la SDL : %s\n",
+		SDL_GetError()); 
+		/* faire ce qu'il faut pour quitter proprement */
+	}
+
 	/* #### Boucle d evenement ###*/
 
 	while (running) {
 
-	while (SDL_PollEvent(&event))
-	{
-		switch(event.type)
+		while (SDL_PollEvent(&event))
 		{
-			case SDL_WINDOWEVENT:
-				printf("window event\n");
-				switch(event.window.event)
-				{
-					case SDL_WINDOWEVENT_CLOSE:
-						printf("appui sur la croix\n");
-						break;
-					case SDL_WINDOWEVENT_SIZE_CHANGED:
-						width = event.window.data1;
-						height = event.window.data2;
-						printf("Size : %d%d\n", width,height);
-					default:
-						afficherEcran();
-				}
-				break;
-			case SDL_MOUSEBUTTONDOWN:
-				printf("Appui :%d %d\n",event.button.x,event.button.y);
-				break;
-			case SDL_QUIT:
-				printf("on quitte\n");
-				running = 0;
-		}
-	}   
-	SDL_Delay(1);
-}
+			switch(event.type)
+			{
+				case SDL_WINDOWEVENT:
+					printf("window event\n");
+					switch(event.window.event)
+					{
+						case SDL_WINDOWEVENT_CLOSE:
+							printf("appui sur la croix\n");
+							break;
+						case SDL_WINDOWEVENT_SIZE_CHANGED:
+							width = event.window.data1;
+							height = event.window.data2;
+							printf("Size : %d%d\n", width,height);
+						default:
+							afficherEcran(renderer);
+					}
+					break;
+				case SDL_MOUSEBUTTONDOWN:
+					printf("Appui :%d %d\n",event.button.x,event.button.y);
+					break;
+				case SDL_QUIT:
+					printf("on quitte\n");
+					running = 0;
+			}
+		}   
+		SDL_Delay(1);
+	}
 
 	/* ######### moteur texte ########## */
-	/*initialiser(tab);
+	/* tab);
 	while(!fin(tab) && (iteration <22) && (varUser != 999))
 	{
 		iteration++;
@@ -122,6 +133,7 @@ int main(){
 	printf("##########################\n");
 */
 	/* rendu des ressources */
+	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	IMG_Quit();
 	TTF_Quit();
@@ -144,11 +156,36 @@ void initialiser(int tab[][TAILLE]){
 		}
 	}
 }
-void afficherGrille(int tab[][TAILLE]){
+void afficherGrille(int tab[][TAILLE], SDL_Renderer *renderer){
 	int i,j;
+	SDL_Rect rect;
 	for(i=0;i<TAILLE;i++){
 		for(j=0;j<TAILLE;j++){
-			printf("%d ",(int) tab[i][j] / 100);
+			switch((int) tab[i][j] /100)
+			{
+				case 0:
+					SDL_SetRenderDrawColor(renderer, 255, 255, 0, 0);
+					break;
+				case 1:
+					SDL_SetRenderDrawColor(renderer, 255, 0, 0, 0);
+					break;
+				case 2:
+					SDL_SetRenderDrawColor(renderer, 255, 0, 255, 0);
+					break;
+				case 3:
+					SDL_SetRenderDrawColor(renderer, 0, 255, 255, 0);
+					break;
+				case 4:
+					SDL_SetRenderDrawColor(renderer, 0, 0, 255, 0);
+					break;
+				case 5:
+					SDL_SetRenderDrawColor(renderer, 0, 255, 0, 0);
+			}
+			rect.x = 40*i;
+			rect.y = 40*j;
+			rect.w = 40;
+			rect.h = 40;
+			SDL_RenderFillRect(renderer,&rect);
 		}
 		printf("\n");
 	}
@@ -203,6 +240,19 @@ void remplir(int tab[][TAILLE], int oldColor,int newColor,int i,int j,int iterat
 	}
 }
 
-void afficherEcran(){
-
+void afficherEcran(SDL_Renderer *renderer){
+	SDL_Rect rect;
+	
+	/* couleur de fond */
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+	SDL_RenderClear(renderer);
+	
+	/* dessiner en blanc */
+	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 0);
+	rect.x = rect.y = 0;
+	rect.w = rect.h = 600;
+	afficherGrille(tab, renderer);
+	SDL_RenderFillRect(renderer, &rect );
+	SDL_RenderPresent(renderer);
+	
 }
