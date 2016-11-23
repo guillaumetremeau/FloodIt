@@ -42,6 +42,7 @@ int main(){
 	initialiser(tab);
 
 
+	
 	if((initted&flags) != flags)
 	{
 		printf("IMG_Init: Failed to init required jpg and png support!\n");
